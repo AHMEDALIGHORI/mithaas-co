@@ -597,13 +597,12 @@
           if (k === SWEETS.length - 1) snap(c, 1);
           else c.active = false;
         });
-      },
-      onEnterBack: function () { show(counter.current); },
-      onEnter: function () { show(0); },
-      onLeaveBack: function () {
-        SWEETS.forEach(function (s) { var c = clipByName[s.id]; if (c) c.active = false; });
-        show(0);
       }
+      /* No onEnter / onLeaveBack index reset here: entering the pin at a
+         non-zero progress (a nav jump, a deep link, a fast flick) used to fire
+         onEnter *after* onUpdate had already set the right sweet, and force
+         sweet 01 back on top. onUpdate computes the index from progress. */
+
     });
 
     $('#counterIndex').addEventListener('click', function (e) {
