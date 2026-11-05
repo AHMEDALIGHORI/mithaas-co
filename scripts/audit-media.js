@@ -2,7 +2,13 @@
    usage: node scripts/audit-media.js [url] */
 const path = require('path');
 const fs = require('fs');
-const { chromium } = require('C:/Users/user/AppData/Roaming/npm/node_modules/@playwright/cli/node_modules/playwright');
+/* resolve playwright however this machine has it */
+let chromium;
+try { ({ chromium } = require('playwright')); }
+catch (e) {
+  ({ chromium } = require(process.env.PLAYWRIGHT_MODULE ||
+    'C:/Users/user/AppData/Roaming/npm/node_modules/@playwright/cli/node_modules/playwright'));
+}
 
 const URL = process.argv[2] || 'https://ahmedalighori.github.io/mithaas-co/';
 const OUT = path.resolve(__dirname, '..', 'shots', 'media-audit.json');
@@ -20,7 +26,25 @@ const OUT = path.resolve(__dirname, '..', 'shots', 'media-audit.json');
 
   await page.goto(URL, { waitUntil: 'load' });
   await page.waitForFunction('window.ready === true', { timeout: 30000 }).catch(() => {});
-  await page.waitForTimeout(3500);
+  await page.waitForTimeout(3000);
+
+  /* wait for every scrub clip to actually be seekable, and time it — on a
+     cold CDN the last sweet can take a while, and that is what we measure */
+  const t0 = Date.now();
+  const readyAt = {};
+  for (let i = 0; i < 240; i++) {
+    const pending = await page.evaluate(() =>
+      Array.prototype.map.call(document.querySelectorAll('video[data-clip]'), v => ({
+        c: v.getAttribute('data-clip'), ok: v.videoWidth > 0 && v.readyState >= 1
+      })).filter(x => !x.ok).map(x => x.c));
+    for (const c of Object.keys(readyAt)) if (readyAt[c] == null) readyAt[c] = 0;
+    for (const c of ['box', 'kaju', 'laddoo', 'jalebi', 'gulab', 'rasmalai', 'soan']) {
+      if (readyAt[c] == null && pending.indexOf(c) === -1) readyAt[c] = +((Date.now() - t0) / 1000).toFixed(1);
+    }
+    if (!pending.length) break;
+    await page.waitForTimeout(500);
+  }
+  console.error('scrub clips ready at (s): ' + JSON.stringify(readyAt));
 
   /* walk the whole page so every IntersectionObserver loop gets its src */
   const h = await page.evaluate(() => document.body.scrollHeight);
