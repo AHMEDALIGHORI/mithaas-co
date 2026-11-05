@@ -111,7 +111,7 @@ find_src() {
 }
 
 mkdir -p "$OUT/hero" "$OUT/v" "$OUT/img"
-: > "$OUT/.src-map.txt"
+: > "$OUT/src-map.txt"
 
 # ---------------------------------------------------------------------------
 #  encoder profiles
@@ -127,7 +127,7 @@ while IFS='|' read -r name prefix; do
   case "$name" in ''|'#'*) continue;; esac
   case " $SCRUB " in *" $name "*) ;; *) continue;; esac
   f=$(find_src "$prefix" .mp4)
-  printf '%s\n' "$name|$f" >> "$OUT/.src-map.txt"
+  printf '%s\n' "$name|$f" >> "$OUT/src-map.txt"
   say "  $name  <- $(basename "$f")"
   "$FFMPEG" -nostdin -y -v error -i "$f" \
     -vf "$(delogo "$f"),scale=1280:-2:flags=lanczos" \

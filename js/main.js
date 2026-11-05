@@ -339,7 +339,7 @@
       art.style.setProperty('--acc', s.acc);
       art.setAttribute('data-sweet', i);
       art.innerHTML =
-        '<div class="sweet__film film"><video class="scrub" data-clip="' + s.id + '" muted playsinline preload="none" disablepictureinpicture aria-hidden="true"></video></div>' +
+        '<div class="sweet__film film"><video class="scrub" data-clip="' + s.id + '" poster="media/v/' + s.id + '.jpg" muted playsinline preload="none" disablepictureinpicture aria-hidden="true"></video></div>' +
         '<div class="sweet__copy">' +
           '<div class="roll"><div class="roll__i"><p class="sweet__hi">' + s.hi + '</p></div></div>' +
           '<div class="roll"><div class="roll__i"><p class="sweet__en">' + s.en + '</p></div></div>' +
@@ -1179,17 +1179,18 @@
       });
     });
 
-    /* the six sweets stream in behind the box, in page order */
-    setTimeout(function () {
-      var order = ['kaju', 'laddoo', 'jalebi', 'gulab', 'rasmalai', 'soan'];
-      var i = 0;
-      (function next() {
-        if (i >= order.length) return;
-        var c = clipByName[order[i++]];
-        if (!c) { next(); return; }
-        c.load().then(function () { setTimeout(next, 40); });
-      })();
-    }, 1200);
+    /* the six sweets stream in behind the box, in page order. They are
+       *started* in page order but not serialised: waiting for each 4 MB blob
+       before starting the next meant the last sweet landed long after the
+       counter did on a cold cache. Staggered starts, order preserved, and the
+       poster above holds the frame until the blob is seekable. */
+    var order = ['kaju', 'laddoo', 'jalebi', 'gulab', 'rasmalai', 'soan'];
+    order.forEach(function (name, n) {
+      setTimeout(function () {
+        var c = clipByName[name];
+        if (c) c.load();
+      }, 900 + n * 380);
+    });
 
     /* loops: observe as soon as they exist */
     if (loopObserver) loops.forEach(function (v) { loopObserver.observe(v); });
