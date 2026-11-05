@@ -6,6 +6,7 @@
 
 **A scroll-scrubbed Diwali mithai shop â€” open something *sweet* this Diwali.**
 
+[![Live demo](https://img.shields.io/badge/live_demo-open_it-d9a54a?style=for-the-badge)](https://ahmedalighori.github.io/mithaas-co/)
 [![Watch the film](https://img.shields.io/badge/watch_the_film-18s_Â·_1080p-9e1b25?style=for-the-badge)](docs/media/mithaas-promo.mp4)
 [![No build step](https://img.shields.io/badge/build_step-none-d9a54a?style=for-the-badge)](#run-it)
 [![GSAP](https://img.shields.io/badge/GSAP-3.12.5-f6cf7a?style=for-the-badge)](https://gsap.com)
@@ -41,6 +42,8 @@ Then the counter begins. Six sweets, one screen of scroll each. Every one starts
 ```bash
 npx serve .            # or: node scripts/serve.js 8123
 ```
+
+**Live:** https://ahmedalighori.github.io/mithaas-co/
 
 Any static host works â€” Netlify, S3, GitHub Pages, nginx. Open it through a server, not `file://`: the scroll clips are fetched and played from blob URLs.
 
@@ -130,9 +133,9 @@ Adding a seventh sweet means one more scroll film in `media/hero/` and one more 
 
 ## The film
 
-<a href="docs/media/mithaas-promo.mp4"><img src="docs/media/promo-poster.webp" alt="Watch the 18 second promo film — three cuts: 16:9, 1:1, 9:16" width="100%"></a>
+<a href="docs/media/mithaas-promo.mp4"><img src="docs/media/promo-poster.webp" alt="Watch the 18 second promo film Ã— three cuts: 16:9, 1:1, 9:16" width="100%"></a>
 
-*Three cuts ship with it: `mithaas-promo.mp4` (1920×1080), `mithaas-promo-square.mp4` (1080×1080, the LinkedIn cut) and `mithaas-promo-vertical.mp4` (1080×1920, Reels).*
+*Three cuts ship with it: `mithaas-promo.mp4` (1920Ã—1080), `mithaas-promo-square.mp4` (1080Ã—1080, the LinkedIn cut) and `mithaas-promo-vertical.mp4` (1080Ã—1920, Reels).*
 
 Rendered frame-accurately from `video/promo.html` by `scripts/render-video.js`:
 

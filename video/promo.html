@@ -119,7 +119,7 @@ function goo(p, set, u, paint) {
   liquidShape(g, W, H, p, set, u);
   g.filter = 'none';
   /* threshold the alpha so the blurred shapes merge into one crisp paint
-     edge instead of a soft curtain — the goo step of the element */
+     edge instead of a soft curtain â€” the goo step of the element */
   const id = g.getImageData(0, 0, ow, oh), d = id.data;
   for (let i = 3; i < d.length; i += 4) {
     const a = d[i];
