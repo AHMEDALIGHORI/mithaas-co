@@ -225,12 +225,16 @@
       .then(function () {
         self.dur = self.el.duration || 0;
         self.ready = true;
-        /* iOS: a muted play() unlocks inline playback for the whole page */
+        /* iOS: a muted play() unlocks inline playback for the whole page.
+           It must not reset the frame: if this clip landed *after* the reader
+           had already scrolled to it, the scrub position is lost and the ticker
+           would think it had nothing left to do. Forget lastSet instead, so the
+           next tick re-applies cur. */
         var p = self.el.play();
         if (p && p.then) {
           p.then(function () {
             self.el.pause();
-            try { self.el.currentTime = 0; } catch (e) {}
+            self.lastSet = -1;
           }).catch(function () {});
         }
         return self;
