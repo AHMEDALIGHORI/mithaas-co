@@ -566,6 +566,17 @@
           });
         gsap.fromTo($$('.roll__i', newL), { yPercent: 110 },
           { yPercent: 0, duration: dur(0.8), stagger: 0.07, ease: 'power3.out' });
+
+        /* entering the pin at an index other than 0 (a jump, a deep link) leaves
+           the first layer visible underneath, and with lighten blending both
+           sweets draw on top of each other. Only one layer may stay visible. */
+        layers.forEach(function (L) {
+          if (L !== newL && L !== oldL && L.style.visibility !== 'hidden') {
+            gsap.killTweensOf(L);
+            gsap.set(L, { autoAlpha: 0 });
+            L.style.visibility = 'hidden';
+          }
+        });
       }
       var s = SWEETS[i];
       if (glow) glow.style.setProperty('--acc', s.acc);
