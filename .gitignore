@@ -1,0 +1,23 @@
+# ── raw AI downloads ────────────────────────────────────────────────────────
+# 70 MB of Google Flow exports. `media/` is already built from them, and
+# `sh scripts/process.sh` rebuilds it if you drop them back in.
+assets/
+
+# ── review screenshots ──────────────────────────────────────────────────────
+# Only the two frames the README shows are committed.
+shots/*
+!shots/f-03-open.png
+!shots/f-04-counter.png
+
+# ── local tooling ───────────────────────────────────────────────────────────
+.playwright-cli/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+
+# ── how the promo film was made, not part of the template ───────────────────
+# (Motion Prompt skill, installed with `npx skills add showheyohtaki/motion-prompt`)
+.agents/
+.claude/
+skills-lock.json

@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mithaas &amp; Co. — Halwai since 1961 · Diwali mithai in pure desi ghee</title>
+<meta name="description" content="Mithaas &amp; Co. — halwai since 1961, Chandni Chowk, Delhi. Kaju katli, motichoor laddoo, jalebi, gulab jamun, rasmalai and soan papdi in pure desi ghee and real silver varq. Open something sweet this Diwali.">
+<meta name="theme-color" content="#110605">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mithaas &amp; Co. — Open something sweet this Diwali.">
+<meta property="og:description" content="Halwai since 1961 · Chandni Chowk, Delhi. Mithai in pure desi ghee, finished with real silver varq.">
+<meta property="og:image" content="media/img/share.webp">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23110605'/%3E%3Cpath d='M16 5c3 3.9 4.6 6.4 4.6 9a4.6 4.6 0 0 1-9.2 0c0-2.6 1.6-5.1 4.6-9z' fill='%23f6cf7a'/%3E%3Cpath d='M5.6 20.4c0-1.4 1.2-2.2 2.6-2.2h15.6c1.4 0 2.6.8 2.6 2.2 0 3.9-4.7 6.4-10.4 6.4S5.6 24.3 5.6 20.4z' fill='%23d9a54a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://unpkg.com">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Manrope:wght@200..800&family=Yatra+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="is-loading">
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     0 · LOADER — two halves of hammered gold foil, a red silk ribbon,
+     a dark card with the diya and the 000–100 counter.
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader__half loader__half--l"></div>
+  <div class="loader__half loader__half--r"></div>
+  <div class="loader__ribbon"></div>
+
+  <div class="loader__card">
+    <div class="loader__diya">
+      <svg viewBox="0 0 80 80" aria-hidden="true">
+        <defs>
+          <radialGradient id="lg-flame" cx="50%" cy="72%" r="70%">
+            <stop offset="0" stop-color="#fff6cf"/>
+            <stop offset=".45" stop-color="#f6cf7a"/>
+            <stop offset="1" stop-color="#f39c1e" stop-opacity=".15"/>
+          </radialGradient>
+        </defs>
+        <path class="diya__glow" d="M40 14c9 12 14 19 14 27a14 14 0 0 1-28 0c0-8 5-15 14-27z" fill="url(#lg-flame)"/>
+        <ellipse class="diya__lip" cx="40" cy="55" rx="26" ry="5.4" fill="#8a5a1c"/>
+        <path class="diya__bowl" d="M14 55c0 8 11.6 14 26 14s26-6 26-14z" fill="#b57a2b"/>
+        <path class="diya__glint" d="M20 57c0 4 8.9 7 20 7s20-3 20-7" fill="none" stroke="#f6cf7a" stroke-opacity=".5" stroke-width="1.2"/>
+      </svg>
+    </div>
+    <p class="loader__word gold">मिठास</p>
+    <p class="loader__brand">Mithaas &amp; Co.</p>
+    <div class="loader__meter">
+      <span class="loader__count" id="loaderCount">000</span>
+      <span class="loader__msg" id="loaderMsg">Lighting the diyas</span>
+    </div>
+    <div class="loader__track"><i id="loaderBar"></i></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     atmosphere: gold dust, film grain, cursor
+     ══════════════════════════════════════════════════════════════════════ -->
+<canvas class="dust" id="dust" aria-hidden="true"></canvas>
+<div class="grain" id="grain" aria-hidden="true"></div>
+<div class="cursor" id="cursor" aria-hidden="true"><span class="cursor__label" id="cursorLabel"></span></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     1 · NAV
+     ══════════════════════════════════════════════════════════════════════ -->
+<header class="nav" id="nav">
+  <a class="nav__brand" href="#top" data-cursor="link">
+    <span class="nav__mark">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path class="flame" d="M16 4.5c3 3.9 4.6 6.4 4.6 9a4.6 4.6 0 0 1-9.2 0c0-2.6 1.6-5.1 4.6-9z"/>
+        <path class="bowl" d="M5.6 20.4c0-1.4 1.2-2.2 2.6-2.2h15.6c1.4 0 2.6.8 2.6 2.2 0 3.9-4.7 6.4-10.4 6.4S5.6 24.3 5.6 20.4z"/>
+        <ellipse class="lip" cx="16" cy="18.6" rx="10.4" ry="2.1"/>
+      </svg>
+    </span>
+    <span class="nav__word">Mithaas &amp; Co.</span>
+  </a>
+
+  <nav class="nav__links" aria-label="Primary">
+    <a href="#mithai" data-cursor="link">Mithai</a>
+    <a href="#halwai" data-cursor="link">Halwai</a>
+    <a href="#build" data-cursor="link">Build a box</a>
+    <a href="#menu" data-cursor="link">Menu</a>
+    <a href="#visit" data-cursor="link">Visit</a>
+  </nav>
+
+  <a class="btn btn--gold nav__cta" href="#build" data-magnetic data-cursor="link">
+    <span class="btn__face">Order for Diwali</span>
+    <span class="btn__fill" aria-hidden="true"></span>
+  </a>
+
+  <button class="nav__burger" id="navBurger" aria-label="Menu" aria-expanded="false">
+    <i></i><i></i>
+  </button>
+</header>
+
+<!-- full-screen menu, below 1000px -->
+<div class="menu" id="menuOverlay" aria-hidden="true">
+  <nav class="menu__nav" aria-label="Mobile">
+    <a href="#mithai" data-menu-link><span>01</span> Mithai</a>
+    <a href="#halwai" data-menu-link><span>02</span> Halwai</a>
+    <a href="#build" data-menu-link><span>03</span> Build a box</a>
+    <a href="#menu" data-menu-link><span>04</span> Menu</a>
+    <a href="#visit" data-menu-link><span>05</span> Visit</a>
+  </nav>
+  <p class="menu__foot">Chandni Chowk, Delhi · 4 a.m. to 10 p.m.<br>+91 98110 61961</p>
+</div>
+
+<main id="top">
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     2 · THE GIFT BOX — pinned, 240%. Scroll unties the ribbon.
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="hero" id="hero">
+  <div class="hero__pin">
+    <div class="hero__word" id="heroWord" aria-hidden="true">मिठास</div>
+
+    <div class="hero__film film" id="heroFilm">
+      <video class="scrub" data-clip="box" muted playsinline preload="none" disablepictureinpicture aria-hidden="true"></video>
+    </div>
+
+    <div class="hero__frame">
+      <div class="hero__top">
+        <p class="eyebrow"><i class="dot"></i>Halwai since 1961 · Chandni Chowk</p>
+        <p class="hero__date">Diwali · Sun 8 Nov 2026</p>
+      </div>
+
+      <div class="hero__bottom">
+        <h1 class="hero__title" id="heroTitle">
+          <span class="line"><span>Open something</span></span>
+          <span class="line"><span><em class="gold">sweet</em> this Diwali.</span></span>
+        </h1>
+
+        <ol class="steps" id="steps">
+          <li class="step is-on"><b>01</b><span>Untie the ribbon</span></li>
+          <li class="step"><b>02</b><span>Lift the lid</span></li>
+          <li class="step"><b>03</b><span>Let it rise</span></li>
+        </ol>
+
+        <div class="hero__bar"><i id="heroBar"></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     3 · TICKER
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker__track" id="tickerTrack">
+    <div class="ticker__row" id="tickerRow">
+      <span>Pure desi ghee</span><i>✦</i>
+      <span>Real silver varq</span><i>✦</i>
+      <span>Made fresh at 4 a.m.</span><i>✦</i>
+      <span>Pan-India shipping</span><i>✦</i>
+      <span>No preservatives</span><i>✦</i>
+      <span>Diwali orders close 4 Nov</span><i>✦</i>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     4 · THE MITHAI COUNTER — pinned, one screen per sweet
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="counter" id="mithai">
+  <div class="counter__pin">
+    <div class="counter__glow" id="counterGlow" aria-hidden="true"></div>
+    <div class="counter__num" id="counterNum" aria-hidden="true"></div>
+    <div class="counter__layers" id="counterLayers"></div>
+    <ol class="counter__index" id="counterIndex" aria-label="The six sweets"></ol>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     5 · THE HALWAI'S HAND — pinned; the circle opens to full bleed
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="halwai" id="halwai">
+  <div class="halwai__pin">
+    <div class="halwai__stage" id="halwaiStage">
+      <div class="halwai__circle" id="halwaiCircle">
+        <video class="loop" data-loop="pipe" muted playsinline loop preload="none" aria-hidden="true"></video>
+        <svg class="halwai__ring" viewBox="0 0 300 300" aria-hidden="true">
+          <defs><path id="ringPath" d="M150,150 m-122,0 a122,122 0 1,1 244,0 a122,122 0 1,1 -244,0"/></defs>
+          <text><textPath href="#ringPath" startOffset="0">HAND-PIPED ✦ DESI GHEE ✦ SINCE 1961 ✦ HAND-PIPED ✦ DESI GHEE ✦ </textPath></text>
+        </svg>
+      </div>
+    </div>
+    <div class="halwai__veil" id="halwaiVeil" aria-hidden="true"></div>
+    <div class="halwai__copy" id="halwaiCopy">
+      <p class="line"><span>Piped by hand.</span></p>
+      <p class="line"><span>Fried in <em class="gold">desi ghee.</em></span></p>
+      <p class="line"><span>Soaked while it still sings.</span></p>
+    </div>
+    <ul class="stats" id="stats">
+      <li><b data-count="1961" data-plain>1961</b><span>Behind the same counter</span></li>
+      <li><b data-count="4">4</b><span>a.m. the kadai is lit</span></li>
+      <li><b data-count="0">0</b><span>Preservatives, ever</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     6 · REAL SILVER — the varq loop, words filling in on scroll
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="silver" id="silver">
+  <video class="loop silver__film" data-loop="varq" muted playsinline loop preload="none" aria-hidden="true"></video>
+  <div class="silver__vignette" aria-hidden="true"></div>
+  <div class="silver__inner">
+    <p class="silver__words" id="silverWords">Real silver. Real ghee. <em class="gold">Real patience.</em> Every piece finished by hand, the way our grandfather did it.</p>
+    <p class="silver__note"><i class="dot"></i>Varq — edible silver leaf, 0.2 micron</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     7 · BUILD YOUR DIWALI BOX
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="build" id="build">
+  <div class="build__head">
+    <p class="eyebrow"><i class="dot"></i>Nine pieces, your way</p>
+    <h2 class="h2">Build your <em class="gold">Diwali box.</em></h2>
+  </div>
+
+  <div class="build__grid">
+    <div class="build__stage">
+      <div class="box" id="box" aria-label="Your mithai box">
+        <div class="box__tray" id="boxTray"></div>
+        <div class="box__lid" id="boxLid" aria-hidden="true">
+          <span class="box__ribbon box__ribbon--v"></span>
+          <span class="box__ribbon box__ribbon--h"></span>
+          <span class="box__bow"><i></i><i></i></span>
+        </div>
+      </div>
+      <p class="build__hint" id="buildHint">Tap a sweet to place it</p>
+    </div>
+
+    <div class="pick">
+      <ul class="pick__list" id="picker"></ul>
+    </div>
+  </div>
+
+  <div class="tally">
+    <div class="tally__items">
+      <p><span class="tally__k">Pieces</span><b id="tallyPieces">0</b><span class="tally__of">/ 9</span></p>
+      <p><span class="tally__k">Box</span><b id="tallyBox">₹150</b></p>
+      <p><span class="tally__k">Total</span><b class="tally__total" id="tallyTotal">₹0</b></p>
+    </div>
+    <div class="tally__acts">
+      <button class="btn btn--ghost" id="btnRandom" data-cursor="link"><span class="btn__face">Surprise me</span><span class="btn__fill" aria-hidden="true"></span></button>
+      <button class="btn btn--ghost" id="btnClear" data-cursor="link"><span class="btn__face">Empty box</span><span class="btn__fill" aria-hidden="true"></span></button>
+      <button class="btn btn--gold" id="btnSeal" data-cursor="link"><span class="btn__face">Seal the box</span><span class="btn__fill" aria-hidden="true"></span></button>
+      <a class="btn btn--ribbon is-hidden" id="btnWa" href="#" target="_blank" rel="noopener" data-cursor="link"><span class="btn__face">Order on WhatsApp</span><span class="btn__fill" aria-hidden="true"></span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     8 · DIWALI COUNTDOWN
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="diwali" id="diwali">
+  <video class="loop diwali__diyas" data-loop="diyas" muted playsinline loop preload="none" aria-hidden="true"></video>
+  <video class="loop diwali__sparkler" data-loop="sparkler" muted playsinline loop preload="none" aria-hidden="true"></video>
+  <div class="diwali__veil" aria-hidden="true"></div>
+
+  <div class="diwali__inner">
+    <p class="eyebrow"><i class="dot"></i>Lakshmi Puja · Chandni Chowk</p>
+    <h2 class="diwali__h">Diwali <em class="gold">is in</em></h2>
+
+    <div class="clock" id="clock">
+      <div class="clock__u"><b id="cdDays">00</b><span>Days</span></div>
+      <i class="clock__sep">:</i>
+      <div class="clock__u"><b id="cdHours">00</b><span>Hours</span></div>
+      <i class="clock__sep">:</i>
+      <div class="clock__u"><b id="cdMins">00</b><span>Mins</span></div>
+      <i class="clock__sep">:</i>
+      <div class="clock__u"><b id="cdSecs">00</b><span>Secs</span></div>
+    </div>
+
+    <div class="deadlines">
+      <p><span>Last pan-India order</span><b>28 Oct</b></p>
+      <p><span>Delhi NCR same day</span><b>5 Nov</b></p>
+      <p><span>Diwali opening hours</span><b>8 Nov · 6 a.m.</b></p>
+    </div>
+
+    <div class="diyas" id="diyasRow" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     9 · READY TO GIFT
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="hampers" id="gift">
+  <div class="hampers__head">
+    <p class="eyebrow"><i class="dot"></i>Hampers</p>
+    <h2 class="h2">Ready to <em class="gold">gift.</em></h2>
+    <p class="hampers__sub">Sent anywhere in India, packed in gold foil and red silk.</p>
+  </div>
+
+  <div class="hampers__row">
+    <article class="ham" data-tilt data-cursor="link">
+      <div class="ham__film film film--feather">
+        <video class="loop" data-loop="box2" muted playsinline loop preload="none" aria-hidden="true"></video>
+      </div>
+      <span class="ham__tag">Small · 9 pieces</span>
+      <h3 class="ham__name">Shagun Box</h3>
+      <p class="ham__in">Kaju katli, motichoor laddoo, soan papdi · 400 g</p>
+      <p class="ham__price">₹1,150</p>
+    </article>
+
+    <article class="ham" data-tilt data-cursor="link">
+      <div class="ham__film film film--feather">
+        <video class="loop" data-loop="varq" muted playsinline loop preload="none" aria-hidden="true"></video>
+      </div>
+      <span class="ham__tag">Large · 18 pieces</span>
+      <h3 class="ham__name">Lakshmi Hamper</h3>
+      <p class="ham__in">All six mithai, silver varq, dry fruits · 900 g</p>
+      <p class="ham__price">₹2,400</p>
+    </article>
+
+    <article class="ham" data-tilt data-cursor="link">
+      <div class="ham__film film film--feather">
+        <video class="loop" data-loop="syrup" muted playsinline loop preload="none" aria-hidden="true"></video>
+      </div>
+      <span class="ham__tag">Thaal · 24 pieces</span>
+      <h3 class="ham__name">Royal Thaal</h3>
+      <p class="ham__in">All six mithai, brass thaal, diyas · 1.6 kg</p>
+      <p class="ham__price">₹4,200</p>
+    </article>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     10 · PRICE LIST
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="prices" id="menu">
+  <div class="prices__head">
+    <p class="eyebrow"><i class="dot"></i>By the kilo or by the piece</p>
+    <h2 class="h2">The <em class="gold">price list.</em></h2>
+  </div>
+
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div class="prices__list" id="priceList"></div>
+  <div class="prices__photo" id="pricePhoto" aria-hidden="true"></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     11 · VISIT
+     ══════════════════════════════════════════════════════════════════════ -->
+<section class="visit" id="visit">
+  <video class="loop visit__film" data-loop="shop" muted playsinline loop preload="none" aria-hidden="true"></video>
+  <div class="visit__veil" aria-hidden="true"></div>
+  <div class="visit__inner">
+    <p class="eyebrow"><i class="dot"></i>Visit the shop</p>
+    <h2 class="visit__h">Follow the smell of <em class="gold">warm ghee.</em></h2>
+    <div class="visit__cols">
+      <p class="visit__addr">Mithaas &amp; Co.<br>1814, Gali Paranthe Wali<br>Chandni Chowk, Delhi 110006</p>
+      <p class="visit__hrs">Open 4 a.m. – 10 p.m.<br>Daily, all year.<br>Diwali: from 6 a.m.</p>
+      <p class="visit__tel">Orders &amp; hampers<br><a href="tel:+919811061961" data-cursor="link">+91 98110 61961</a><br><a href="mailto:hello@mithaasandco.in" data-cursor="link">hello@mithaasandco.in</a></p>
+    </div>
+    <a class="btn btn--gold visit__btn" href="https://maps.google.com/?q=Chandni+Chowk+Delhi" target="_blank" rel="noopener" data-cursor="link">
+      <span class="btn__face">Get directions</span><span class="btn__fill" aria-hidden="true"></span>
+    </a>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     12 · FOOTER
+     ══════════════════════════════════════════════════════════════════════ -->
+<footer class="foot">
+  <p class="foot__word gold">मिठास</p>
+  <div class="foot__bar">
+    <p>© 2026 Mithaas &amp; Co. · Chandni Chowk, Delhi</p>
+    <nav>
+      <a href="#mithai" data-cursor="link">Mithai</a>
+      <a href="#menu" data-cursor="link">Menu</a>
+      <a href="#build" data-cursor="link">Build a box</a>
+      <a href="#visit" data-cursor="link">Visit</a>
+      <a href="https://instagram.com" target="_blank" rel="noopener" data-cursor="link">Instagram</a>
+    </nav>
+    <p class="foot__made">Handmade in Delhi · Pure desi ghee</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><i class="dot"></i><span id="toastText"></span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mithaas &amp; Co. — promo</title>
+<style>
+  @font-face { font-family: 'x'; src: local('Bodoni Moda'); }
+  html,body{margin:0;background:#000;height:100%;overflow:hidden}
+  canvas{display:block;width:100vw;height:100vh;object-fit:contain}
+  body.rec canvas{width:1920px;height:1080px}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Manrope:wght@200..800&family=Yatra+One&display=swap" rel="stylesheet">
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   MITHAAS & CO. — promo film
+   Canvas 2D, one deterministic timeline. Ported moves:
+     Motion Prompt #019 Liquid transition  · MIT License (c) 2026 Shohei Ohtaki
+       https://showheyohtaki.github.io/motion-prompt/#019
+     Motion Prompt #013 Liquid motion      · MIT License (c) 2026 Shohei Ohtaki
+       https://showheyohtaki.github.io/motion-prompt/#013
+   ══════════════════════════════════════════════════════════════════════════ */
+'use strict';
+
+const W = 1920, H = 1080;
+const cv = document.getElementById('c');
+const k = cv.getContext('2d');
+
+/* ── kit: the helpers #019/#013 expect (from the motion pack kit) ───────── */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, x) => a + (b - a) * x;
+const P = (t, a, b) => clamp((t - a) / (b - a));
+const eIOs = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+const eOut = x => 1 - Math.pow(1 - x, 3);
+const eIO = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const smooth = x => x * x * (3 - 2 * x);
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+
+/* ── the film ─────────────────────────────────────────────────────────────── */
+const INK = '#110605';
+const GOLD = '#d9a54a', GOLD_LT = '#f6cf7a', GOLD_HI = '#fff3cf', IVORY = '#f6ead6', RIBBON = '#9e1b25';
+
+const SCENES = [
+  { img: 'hero-plate', t0: 0.0, t1: 4.9, z: [1.03, 1.09] },
+  { img: 'open',    t0: 3.5,  t1: 8.5,  z: [1.02, 1.08] },
+  { img: 'counter', t0: 7.1,  t1: 11.9, z: [1.03, 1.10] },
+  { img: 'build',   t0: 10.5, t1: 14.9, z: [1.02, 1.07] },
+  { img: 'diwali',  t0: 13.5, t1: 18.6, z: [1.01, 1.05] }
+];
+const TRANS = [3.0, 6.6, 10.0, 13.0];   // each runs 1.8 s
+const T_LEN = 1.8;
+const TOTAL = 18.6;
+
+const IMGS = {};
+const names = ['hero-plate', 'open', 'counter', 'build', 'diwali'];
+Promise.all(names.map(n => new Promise(res => {
+  const im = new Image();
+  im.onload = () => { IMGS[n] = im; res(); };
+  im.onerror = () => res();
+  im.src = 'assets/' + n + '.png';
+}))).then(() => document.fonts.ready).then(() => {
+  window.ready = true;
+  if (window.AUTOSTART) start();
+});
+
+/* ── scene drawing: cover-fit with a slow push-in ─────────────────────────── */
+function drawScene(g, name, t, t0, t1, z) {
+  const im = IMGS[name];
+  if (!im) { g.fillStyle = INK; g.fillRect(0, 0, W, H); return; }
+  const p = clamp((t - t0) / (t1 - t0));
+  const s = lerp(z[0], z[1], smooth(p));
+  const w = W * s, h = H * s;
+  g.drawImage(im, (W - w) / 2, (H - h) / 2 - h * 0.012 * p, w, h);
+  /* keep the page's own ink at the edges so scenes never seam */
+  const vg = g.createRadialGradient(W / 2, H * 0.48, H * 0.28, W / 2, H * 0.5, H * 0.95);
+  vg.addColorStop(0, 'rgba(17,6,5,0)');
+  vg.addColorStop(1, 'rgba(17,6,5,0.5)');
+  g.fillStyle = vg; g.fillRect(0, 0, W, H);
+}
+
+/* ═══ #019 LIQUID TRANSITION ════════════════════════════════════════════════
+   Paint-like liquid drips down from the top and fills the frame, becoming
+   the next scene. Timings, easing and drip geometry kept from the element:
+   two layers, 0.35–1.5 s and 0.7–1.8 s, quadratic ease-in-out, drips
+   30–54 px wide, the front waving on two sines.                            */
+const DRIPS = [0, 1].map(s => {
+  let seed = 190 + s * 7;
+  const R = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const a = [];
+  for (let i = 0; i < 7; i++) a.push({ x: (36 + i * 78 + (R() - 0.5) * 30) * (W / 539), len: (30 + R() * 80) * (H / 208), wd: (15 + R() * 12) * (W / 539), ph: R() * 6 });
+  return a;
+});
+function liquidShape(g, w, h, p, set, u) {
+  const base = lerp(-110 * (h / 208), h + 130 * (h / 208), p);
+  const amp = Math.sin(Math.PI * clamp(p * 1.1));
+  g.beginPath(); g.moveTo(-40, -60);
+  for (let x = -40; x <= w + 40; x += 12) {
+    g.lineTo(x, base + amp * (13 * Math.sin(x * 0.021 + u * 3 + set) + 8 * Math.sin(x * 0.05 + u * 4.3)) * (h / 208));
+  }
+  g.lineTo(w + 40, -60); g.closePath(); g.fill();
+  for (const d of DRIPS[set]) {
+    const L = d.len * (0.25 + amp * 0.9), y0 = base - 20 * (h / 208);
+    g.beginPath(); g.roundRect(d.x - d.wd, y0, d.wd * 2, L + 20, d.wd); g.fill();
+    g.beginPath(); g.arc(d.x, y0 + L + 18 * (h / 208), d.wd * 1.25, 0, 7); g.fill();
+  }
+}
+/* goo: draw the shape in white, blur it, then let source-in paint the inside */
+function goo(p, set, u, paint) {
+  const ow = W >> 1, oh = H >> 1;
+  const off = mk(ow, oh), g = off.getContext('2d');
+  g.setTransform(0.5, 0, 0, 0.5, 0, 0);
+  g.filter = 'blur(5px)';
+  g.fillStyle = '#fff';
+  liquidShape(g, W, H, p, set, u);
+  g.filter = 'none';
+  /* threshold the alpha so the blurred shapes merge into one crisp paint
+     edge instead of a soft curtain � the goo step of the element */
+  const id = g.getImageData(0, 0, ow, oh), d = id.data;
+  for (let i = 3; i < d.length; i += 4) {
+    const a = d[i];
+    d[i] = a <= 96 ? 0 : a >= 164 ? 255 : ((a - 96) / 68) * 255;
+  }
+  g.putImageData(id, 0, 0);
+  g.globalCompositeOperation = 'source-in';
+  paint(g);
+  return off;
+}
+function liquidWipe(g, t, ti, nextName, u) {
+  const lt = t - TRANS[ti];
+  if (lt < 0 || lt > T_LEN) return false;
+  const p1 = eIOs(P(lt, 0.35, 1.5));
+  const p2 = eIOs(P(lt, 0.7, 1.8));
+  const ns = SCENES[ti + 1];
+  if (p1 > 0 && p2 < 1) {
+    const a = goo(p1, 0, u, gg => {
+      const lg = gg.createLinearGradient(0, 0, 0, H);
+      lg.addColorStop(0, '#3a0d09');
+      lg.addColorStop(1, RIBBON);
+      gg.fillStyle = lg; gg.fillRect(0, 0, W, H);
+    });
+    g.drawImage(a, 0, 0, W, H);
+  }
+  if (p2 >= 1) {
+    drawScene(g, ns.img, t, ns.t0, ns.t1, ns.z);
+  } else if (p2 > 0) {
+    const b = goo(p2, 1, u + 1, gg => {
+      gg.save(); drawScene(gg, ns.img, t, ns.t0, ns.t1, ns.z); gg.restore();
+    });
+    g.drawImage(b, 0, 0, W, H);
+  }
+  return true;
+}
+
+/* ═══ LIQUID GLASS ══════════════════════════════════════════════════════════
+   A real canvas liquid-glass layer: the backdrop, blurred and slightly
+   magnified, clipped to a rounded shape, tinted, given an inner glow, a
+   refractive rim and a specular sheen that travels.                        */
+function glass(g, x, y, w, h, r, opts) {
+  opts = opts || {};
+  const blur = opts.blur == null ? 26 : opts.blur;
+  const zoom = opts.zoom == null ? 1.04 : opts.zoom;
+  const back = opts.back;                    /* () => void  draws the backdrop */
+
+  g.save();
+  rr(g, x, y, w, h, r); g.clip();
+
+  /* 1 · the backdrop, blurred and magnified inside the glass */
+  g.save();
+  if (typeof blur === 'number' && back) {
+    g.beginPath(); rr(g, x, y, w, h, r); g.clip();
+    g.filter = 'blur(' + blur + 'px) saturate(1.25) brightness(1.06)';
+    g.translate(x + w / 2, y + h / 2);
+    g.scale(zoom, zoom);
+    g.translate(-(x + w / 2), -(y + h / 2));
+    back(g);
+  }
+  g.restore();
+
+  /* 2 · tint + a whisper of warp light */
+  const tg = g.createLinearGradient(x, y, x + w, y + h);
+  tg.addColorStop(0, 'rgba(255,243,207,0.16)');
+  tg.addColorStop(0.45, 'rgba(255,236,178,0.06)');
+  tg.addColorStop(1, 'rgba(110,60,18,0.14)');
+  g.fillStyle = tg; g.fillRect(x, y, w, h);
+
+  /* 3 · inner shadow at the top, glow at the bottom — the glass thickness */
+  let ig = g.createLinearGradient(0, y, 0, y + h);
+  ig.addColorStop(0, 'rgba(255,255,255,0.20)');
+  ig.addColorStop(0.14, 'rgba(255,255,255,0)');
+  ig.addColorStop(0.86, 'rgba(0,0,0,0)');
+  ig.addColorStop(1, 'rgba(0,0,0,0.32)');
+  g.fillStyle = ig; g.fillRect(x, y, w, h);
+
+  /* 4 · the specular sheen, travelling with t */
+  const sp = opts.sheen == null ? 0 : opts.sheen;
+  g.globalCompositeOperation = 'screen';
+  const sg = g.createLinearGradient(x + (sp * 1.7 - 0.5) * w, y, x + (sp * 1.7 - 0.5) * w + w * 0.55, y + h);
+  sg.addColorStop(0, 'rgba(255,255,255,0)');
+  sg.addColorStop(0.42, 'rgba(255,248,224,0.30)');
+  sg.addColorStop(0.5, 'rgba(255,255,255,0.42)');
+  sg.addColorStop(0.58, 'rgba(255,248,224,0.24)');
+  sg.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = sg; g.fillRect(x, y, w, h);
+  g.globalCompositeOperation = 'source-over';
+  g.restore();
+
+  /* 5 · the rim: a bright top-left arc, dark bottom, gold hairline */
+  g.save();
+  const rim = g.createLinearGradient(x, y, x + w * 0.9, y + h);
+  rim.addColorStop(0, 'rgba(255,255,255,0.85)');
+  rim.addColorStop(0.28, 'rgba(255,243,207,0.35)');
+  rim.addColorStop(0.6, 'rgba(217,165,74,0.30)');
+  rim.addColorStop(1, 'rgba(90,50,12,0.55)');
+  g.strokeStyle = rim;
+  g.lineWidth = 2.4;
+  rr(g, x + 1.2, y + 1.2, w - 2.4, h - 2.4, r - 1);
+  g.stroke();
+  g.strokeStyle = 'rgba(255,243,207,0.16)';
+  g.lineWidth = 1;
+  rr(g, x + 4, y + 4, w - 8, h - 8, Math.max(2, r - 4));
+  g.stroke();
+  g.restore();
+}
+
+/* a circular glass lens — the same recipe, in a circle, magnifying */
+function lens(g, cx, cy, rad, zoom, sheen, back) {
+  g.save();
+  g.beginPath(); g.arc(cx, cy, rad, 0, Math.PI * 2); g.clip();
+  g.save();
+  g.filter = 'blur(1.5px) saturate(1.18) brightness(1.04)';
+  g.translate(cx, cy); g.scale(zoom, zoom); g.translate(-cx, -cy);
+  back(g);
+  g.restore();
+  g.globalCompositeOperation = 'screen';
+  const sg = g.createLinearGradient(cx - rad, cy - rad, cx + rad, cy + rad);
+  const o = 0.5 + Math.sin(sheen) * 0.5;
+  sg.addColorStop(0, 'rgba(255,255,255,' + (0.05 + 0.12 * o) + ')');
+  sg.addColorStop(0.5, 'rgba(255,248,224,0)');
+  sg.addColorStop(1, 'rgba(255,255,255,' + (0.10 * (1 - o)) + ')');
+  g.fillStyle = sg; g.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
+  g.globalCompositeOperation = 'source-over';
+  g.restore();
+  const rim = g.createLinearGradient(cx - rad, cy - rad, cx + rad * 0.6, cy + rad);
+  rim.addColorStop(0, 'rgba(255,255,255,0.95)');
+  rim.addColorStop(0.4, 'rgba(246,207,122,0.55)');
+  rim.addColorStop(1, 'rgba(120,70,20,0.55)');
+  g.strokeStyle = rim; g.lineWidth = 3;
+  g.beginPath(); g.arc(cx, cy, rad - 1.5, 0, Math.PI * 2); g.stroke();
+  g.strokeStyle = 'rgba(255,243,207,0.18)'; g.lineWidth = 1;
+  g.beginPath(); g.arc(cx, cy, rad - 8, 0, Math.PI * 2); g.stroke();
+}
+
+/* ── type ─────────────────────────────────────────────────────────────────── */
+function goldText(g, s, x, y, font, align) {
+  const w = g.measureText(s).width;
+  const grad = g.createLinearGradient(x - (align === 'center' ? w / 2 : 0), y, x - (align === 'center' ? w / 2 : 0) + w, y);
+  grad.addColorStop(0, '#8a5a1c'); grad.addColorStop(0.2, GOLD);
+  grad.addColorStop(0.4, GOLD_LT); grad.addColorStop(0.5, GOLD_HI);
+  grad.addColorStop(0.62, GOLD_LT); grad.addColorStop(0.85, '#b87d2c'); grad.addColorStop(1, '#8a5a1c');
+  g.fillStyle = grad; g.fillText(s, x, y);
+}
+const pxOf = f => { const m = /(\d+(?:\.\d+)?)px/.exec(f); return m ? +m[1] : 80; };
+function maskedLine(g, s, x, y, p, font, color, gold) {
+  /* rises through a mask, the way the site's headlines do */
+  const asc = pxOf(font) * 1.02;
+  g.save();
+  g.beginPath(); g.rect(x - 40, y - asc, W, asc * 1.32); g.clip();
+  const dy = (1 - eOut(p)) * asc;
+  g.font = font; g.textBaseline = 'alphabetic';
+  if (gold) goldText(g, s, x, y + dy, font); else { g.fillStyle = color; g.fillText(s, x, y + dy); }
+  g.restore();
+}
+const F = {
+  h1: 'italic 400 132px "Bodoni Moda", serif',
+  h2: '400 96px "Bodoni Moda", serif',
+  hi: '400 104px "Yatra One", serif',
+  eyebrow: '600 22px "Manrope", sans-serif',
+  mono: '600 19px "Manrope", sans-serif',
+  pill: '700 24px "Manrope", sans-serif'
+};
+
+/* ── overlays ─────────────────────────────────────────────────────────────── */
+function dot(g, x, y, a) {
+  g.save();
+  const gl = g.createRadialGradient(x, y, 0, x, y, 16);
+  gl.addColorStop(0, 'rgba(246,207,122,' + (0.9 * a) + ')');
+  gl.addColorStop(1, 'rgba(246,207,122,0)');
+  g.fillStyle = gl; g.beginPath(); g.arc(x, y, 16, 0, 7); g.fill();
+  g.fillStyle = 'rgba(246,207,122,' + a + ')'; g.beginPath(); g.arc(x, y, 3.4, 0, 7); g.fill();
+  g.restore();
+}
+
+function overlayHero(g, t) {
+  const a = clamp((t - 0.35) / 0.9);
+  g.save(); g.globalAlpha = a;
+  dot(g, 96, 132, 1);
+  g.font = F.eyebrow; g.fillStyle = 'rgba(246,234,214,0.62)';
+  g.letterSpacing = '6px';
+  g.fillText('HALWAI SINCE 1961 · CHANDNI CHOWK, DELHI', 122, 140);
+  g.letterSpacing = '0px';
+  g.restore();
+
+  maskedLine(g, 'Open something', 96, 872, P(t, 0.5, 1.5), F.h2, IVORY, false);
+  maskedLine(g, 'sweet this Diwali.', 96, 986, P(t, 0.62, 1.62), F.h2, IVORY, true);
+
+  /* the liquid-glass lens: it magnifies the diya flame, and drifts */
+  const s = eOut(P(t, 1.1, 2.1));
+  if (s > 0) {
+    const cx = 1573 + Math.sin(t * 0.9) * 16, cy = 730 + Math.cos(t * 0.7) * 10;
+    g.save();
+    g.globalAlpha = s;
+    lens(g, cx, cy, 150 * (0.86 + 0.14 * s), 1.55, t * 1.6, gg => drawScene(gg, 'hero-plate', t, SCENES[0].t0, SCENES[0].t1, SCENES[0].z));
+    g.restore();
+  }
+}
+
+function glassCaption(g, t, tIn, tOut, label, title, sheenT) {
+  const a = clamp((t - tIn) / 0.6) * clamp((tOut - t) / 0.5);
+  if (a <= 0) return;
+  const w = 560, h = 132, x = 96, y = 806, r = 26;
+  g.save();
+  g.globalAlpha = a;
+  g.translate(0, (1 - eOut(P(t, tIn, tIn + 0.6))) * 40);
+  glass(g, x, y, w, h, r, {
+    blur: 30, zoom: 1.05, sheen: smooth(P(t, sheenT, sheenT + 1.6)),
+    back: gg => drawScene(gg, CUR, t, SCENES[CI].t0, SCENES[CI].t1, SCENES[CI].z)
+  });
+  g.font = F.mono; g.fillStyle = 'rgba(246,207,122,0.9)';
+  g.letterSpacing = '4px';
+  g.fillText(label, x + 32, y + 48);
+  g.letterSpacing = '0px';
+  g.font = F.h2; g.fillStyle = IVORY;
+  g.font = '400 44px "Bodoni Moda", serif';
+  g.fillText(title, x + 32, y + 100);
+  g.restore();
+}
+
+/* ── frame ────────────────────────────────────────────────────────────────── */
+let CI = 0, CUR = 'hero';
+function frame(t) {
+  /* which scene owns this moment */
+  let i = 0;
+  for (let n = 0; n < SCENES.length; n++) if (t >= SCENES[n].t0) i = n;
+  CI = i; CUR = SCENES[i].img;
+
+  k.setTransform(1, 0, 0, 1, 0, 0);
+  k.clearRect(0, 0, W, H);
+  k.fillStyle = INK; k.fillRect(0, 0, W, H);
+  k.save();
+
+  /* current scene */
+  drawScene(k, SCENES[i].img, t, SCENES[i].t0, SCENES[i].t1, SCENES[i].z);
+
+  /* scene furniture */
+  if (i === 0) overlayHero(k, t);
+  if (i === 1) glassCaption(k, t, 4.3, 6.7, '01 · UNTIE THE RIBBON', 'The box opens as you scroll', 4.5);
+  if (i === 2) {
+    glassCaption(k, t, 7.9, 10.3, '02 · SIX SWEETS', 'Each one breaks apart in slow motion', 8.1);
+    /* a glass lens travelling across the sweet */
+    const lp = smooth(P(t, 7.9, 10.2));
+    if (lp > 0 && lp < 1) {
+      const cx = lerp(1440, 900, lp), cy = lerp(430, 520, lp), rad = 190;
+      lens(k, cx, cy, rad, 1.28, t * 1.4, gg => drawScene(gg, 'counter', t, SCENES[2].t0, SCENES[2].t1, SCENES[2].z));
+    }
+  }
+  if (i === 3) glassCaption(k, t, 11.3, 13.5, '03 · NINE PIECES', 'Build your own Diwali box', 11.5);
+  if (i === 4) endCard(k, t);
+
+  /* the liquid transitions ride on top */
+  for (let ti = 0; ti < TRANS.length; ti++) {
+    if (t >= TRANS[ti] && t <= TRANS[ti] + T_LEN) { liquidWipe(k, t, ti, SCENES[ti + 1].img, t); break; }
+  }
+
+  /* grain + vignette, the same finish as the page */
+  vignette(k);
+  k.restore();
+}
+
+function endCard(g, t) {
+  const a = clamp((t - 14.6) / 0.8);
+  if (a <= 0) return;
+  g.save();
+  g.globalAlpha = a;
+  g.fillStyle = 'rgba(17,6,5,' + (0.76 * a) + ')';
+  g.fillRect(0, 0, W, H);
+
+  g.textAlign = 'center';
+  g.font = F.hi;
+  goldText(g, 'मिठास', W / 2, 430, F.hi, 'center');
+  g.font = F.eyebrow; g.fillStyle = 'rgba(246,234,214,0.6)';
+  g.letterSpacing = '9px';
+  g.fillText('MITHAAS & CO. · HALWAI SINCE 1961', W / 2, 500);
+  g.letterSpacing = '0px';
+
+  maskedLine2(g, 'Open something sweet this Diwali.', W / 2, 640, P(t, 14.9, 15.9), '400 66px "Bodoni Moda", serif', IVORY);
+
+  /* glass CTA */
+  const s = eOut(P(t, 15.3, 16.1));
+  if (s > 0) {
+    const w = 470, h = 96, x = W / 2 - w / 2, y = 720, r = 48;
+    g.globalAlpha = a * s;
+    glass(g, x, y, w, h, r, {
+      blur: 20, zoom: 1.05, sheen: smooth(P(t, 15.6, 17.4)),
+      back: gg => drawScene(gg, 'diwali', t, SCENES[4].t0, SCENES[4].t1, SCENES[4].z)
+    });
+    g.textAlign = 'center';
+    g.font = F.pill; g.fillStyle = IVORY;
+    g.letterSpacing = '5px';
+    g.fillText('MITHAASANDCO.IN', W / 2, y + h / 2 + 1);
+    g.letterSpacing = '0px';
+  }
+  g.restore();
+}
+function maskedLine2(g, s, x, y, p, font, color) {
+  const asc = pxOf(font) * 1.05;
+  g.save();
+  g.beginPath(); g.rect(x - 700, y - asc, 1400, asc * 1.35); g.clip();
+  const dy = (1 - eOut(p)) * asc;
+  g.font = font; g.fillStyle = color;
+  g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  g.fillText(s, x, y + dy);
+  g.restore();
+}
+
+let grainCv = null;
+function vignette(g) {
+  const vg = g.createRadialGradient(W / 2, H / 2, H * 0.42, W / 2, H / 2, H * 1.02);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.42)');
+  g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  if (!grainCv) {
+    grainCv = mk(320, 180);
+    const gg = grainCv.getContext('2d');
+    const id = gg.createImageData(320, 180);
+    let s = 12345;
+    for (let i = 0; i < id.data.length; i += 4) {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      const v = (s / 4294967296) * 255;
+      id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 26;
+    }
+    gg.putImageData(id, 0, 0);
+  }
+  g.save();
+  g.globalAlpha = 0.5;
+  g.globalCompositeOperation = 'overlay';
+  g.imageSmoothingEnabled = false;
+  g.drawImage(grainCv, 0, 0, W, H);
+  g.restore();
+}
+
+/* ── play ─────────────────────────────────────────────────────────────────── */
+let raf = null, T0 = 0, recorded = false;
+function start() {
+  if (raf) return;
+  T0 = performance.now();
+  const loop = () => {
+    const t = (performance.now() - T0) / 1000;
+    frame(t % TOTAL);
+    if (t < TOTAL) raf = requestAnimationFrame(loop);
+    else { frame(TOTAL - 0.001); window.filmDone = true; }
+  };
+  raf = requestAnimationFrame(loop);
+}
+window.start = start;
+window.renderAt = t => frame(t);
+window.AUTOSTART = !/norec/.test(location.search);
+if (window.AUTOSTART) window.addEventListener('load', () => {
+  const wait = () => (window.ready ? start() : setTimeout(wait, 60));
+  wait();
+});
+</script>
+</body>
+</html>
